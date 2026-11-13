@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#243d32" />
+    <meta
+      name="description"
+      content="Text Fareplay to compare food delivery and rides around your budget and arrival time."
+    />
+    <title>Fareplay — Just text it.</title>
+    <link rel="stylesheet" href="/chat.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="story">
+        <a class="wordmark" href="/">f<span>.</span> fareplay</a>
+        <div class="story-body">
+          <div class="eyebrow">YOUR EVERYDAY DECISION, HANDLED.</div>
+          <h1>Less searching.<br />More <em>living.</em></h1>
+          <p>
+            Text what you need. Compare food and rides around your budget, your
+            time, and your offers.
+          </p>
+          <div class="story-note">
+            <span>↗</span>
+            <p>One conversation.<br />Your next meal or your next move.</p>
+          </div>
+        </div>
+        <div class="story-footer">BUILT FOR THE WAY YOU ALREADY TALK.</div>
+      </aside>
+      <section class="messenger" aria-label="Fareplay text conversation">
+        <header class="chat-header">
+          <div class="avatar">f.</div>
+          <div>
+            <h2>Fareplay</h2>
+            <p>Food. Rides. Better prices.</p>
+          </div>
+          <button id="reset" aria-label="Start a new conversation">↻</button>
+        </header>
+        <div class="demo-strip">
+          <span class="demo-dot"></span>INTERACTIVE DEMO · EXAMPLE PRICES<button
+            id="about"
+          >
+            How it works
+          </button>
+        </div>
+        <div
+          id="messages"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions text"
+          aria-label="Messages"
+        ></div>
+        <div id="typing" hidden>
+          Fareplay is checking example options<span>…</span>
+        </div>
+        <div
+          class="suggestions"
+          id="suggestions"
+          aria-label="Suggested messages"
+        >
+          <button data-prompt="food">Compare my dinner</button
+          ><button data-prompt="rides">Find a cheaper ride</button
+          ><button data-prompt="help">What can I ask?</button>
+        </div>
+        <form id="compose">
+          <label class="sr-only" for="message">Message Fareplay</label
+          ><textarea
+            id="message"
+            name="message"
+            placeholder="Text what you need…"
+            rows="1"
+            maxlength="1600"
+            required
+            enterkeyhint="send"
+          ></textarea
+          ><button type="submit" id="send" aria-label="Send message">↑</button>
+        </form>
+        <div class="composer-note">
+          No orders or bookings. Demo uses invented quotes.
+        </div>
+      </section>
+    </main>
+    <dialog id="about-dialog">
+      <div class="dialog-title">
+        <h2>Text it. Compare it.</h2>
+        <button id="close-about" aria-label="Close">×</button>
+      </div>
+      <p>
+        This is an Android-friendly preview of the conversation. It runs in your
+        browser with a limited request parser and clearly labeled example
+        prices. It does not send SMS or control a phone.
+      </p>
+      <p>
+        The included SMS backend connects a Twilio number to the same
+        conversation engine, a persistent queue, and PhoneUse. Once configured,
+        you can text it from Android’s normal Messages app.
+      </p>
+      <p>
+        Real SMS and live price collection are not activated. They need an SMS
+        number, credentials, and a working phone signed into your apps.
+      </p>
+      <p>
+        Try changing the budget or arrival limit after a comparison. For a
+        different basket or route, Fareplay asks before starting a new check.
+      </p>
+      <a href="/compare.html">Open the original quote comparison view ↗</a>
+    </dialog>
+    <script type="module" src="/chat.mjs"></script>
+  </body>
+</html>

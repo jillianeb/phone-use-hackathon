@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Compare your food checkout totals and ride quotes, including offers already applied."
+    />
+    <meta name="local-token" content="__LOCAL_TOKEN__" />
+    <title>Fareplay — Your price. Your pick.</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/" aria-label="Fareplay home"
+        ><span class="brand-mark">f.</span>fareplay<span class="small-tag"
+          >HACKATHON BUILD</span
+        ></a
+      ><button id="setup" class="text-button">
+        Phone connection <span id="connection-dot">○</span>
+      </button>
+    </header>
+    <main>
+      <section class="intro">
+        <div class="eyebrow">LESS APP HOPPING. BETTER DECISIONS.</div>
+        <h1>Your price.<br /><span>Your pick.</span></h1>
+        <p>
+          Your food and rides, compared at the price you actually pay.<br
+            class="desktop"
+          />
+          Offers included. Receipts attached.
+        </p>
+      </section>
+      <div class="workspace">
+        <section class="request-panel">
+          <div class="tabs" role="tablist" aria-label="Compare category">
+            <button
+              role="tab"
+              id="food-tab"
+              data-mode="food"
+              aria-selected="true"
+            >
+              ↗ Get food</button
+            ><button
+              role="tab"
+              id="rides-tab"
+              data-mode="rides"
+              aria-selected="false"
+            >
+              ↗ Get there
+            </button>
+          </div>
+          <form id="request-form">
+            <div id="food-fields">
+              <label
+                >Restaurant & exact branch<input
+                  name="restaurant"
+                  placeholder="Restaurant, street address"
+                  maxlength="300" /></label
+              ><label
+                >Your exact basket<textarea
+                  name="basket"
+                  rows="3"
+                  placeholder="2 × veggie burrito, regular size, no cheese"
+                  maxlength="2000"
+                ></textarea></label
+              ><label
+                >Deliver to<input
+                  name="address"
+                  placeholder="Full delivery address"
+                  maxlength="500"
+              /></label>
+              <div class="input-row">
+                <label
+                  >Same tip on both ($)<input
+                    name="tip"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value="3"
+                    required /></label
+                ><label
+                  >Arrives within (min)<input
+                    name="foodTime"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="Optional"
+                /></label>
+              </div>
+            </div>
+            <div id="rides-fields" hidden>
+              <label
+                >Pick up<input
+                  name="pickup"
+                  placeholder="Exact pickup address"
+                  maxlength="500" /></label
+              ><label
+                >Drop off<input
+                  name="destination"
+                  placeholder="Destination address"
+                  maxlength="500" /></label
+              ><label
+                >Total arrival time limit (min)<input
+                  name="rideTime"
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="Optional, includes pickup & walking"
+              /></label>
+              <p class="field-help">
+                Compare UberX, Lyft Standard and transit. Time includes the
+                whole journey.
+              </p>
+            </div>
+            <button type="submit" class="primary" id="compare">
+              Check my apps <span>↗</span>
+            </button>
+            <p id="request-help" class="field-help">
+              Live checks need a connected phone and signed-in apps.
+            </p>
+          </form>
+          <div class="divider"></div>
+          <div class="panel-foot">
+            <span>Have prices already?</span
+            ><button class="text-button" id="add-quote">+ Add a quote</button>
+          </div>
+          <div class="utility-row">
+            <button class="text-button" id="load-example">Try example</button
+            ><label class="text-button file-label"
+              >Import results<input
+                type="file"
+                id="import"
+                accept="application/json,.json"
+                hidden /></label
+            ><button class="text-button" id="export">Export</button
+            ><button class="text-button" id="clear">Clear</button>
+          </div>
+        </section>
+        <section class="results-panel" aria-label="Comparison results">
+          <div class="results-top">
+            <div>
+              <div class="eyebrow">THE COMPARISON</div>
+              <h2 id="results-title">Same basket. Real totals.</h2>
+            </div>
+            <span class="pill" id="source-status">NO QUOTES YET</span>
+          </div>
+          <div id="notice" role="status" aria-live="polite"></div>
+          <div id="recommendation"></div>
+          <div id="cards"></div>
+          <div id="activity" role="status" aria-live="polite" hidden></div>
+          <div class="method-note">
+            <span>↳</span>
+            <p>
+              We compare the displayed total, including tax, fees and the same
+              tip. Applied offers are already in that total. Unverified coupons
+              are never subtracted twice.
+            </p>
+          </div>
+        </section>
+      </div>
+      <footer>
+        <span>FOOD + RIDES. ONE LESS DECISION.</span
+        ><span>Compare first. Confirm in the provider app.</span>
+      </footer>
+    </main>
+    <dialog id="quote-dialog">
+      <form id="quote-form">
+        <div class="dialog-heading">
+          <h2>Add an observed quote</h2>
+          <button
+            type="button"
+            class="close"
+            data-close="quote-dialog"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <p class="field-help">
+          Copy the total shown in the app. Include fees, tax and your chosen
+          tip.
+        </p>
+        <label>Provider<select name="provider"></select></label>
+        <div class="input-row">
+          <label
+            >Displayed total ($)<input
+              name="total"
+              type="number"
+              min="0"
+              step="0.01"
+              required /></label
+          ><label
+            >Total arrival time (min)<input
+              name="eta"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="Unknown"
+          /></label>
+        </div>
+        <div class="input-row">
+          <label
+            >Quote type<select name="stage">
+              <option value="checkout">Final quote / checkout</option>
+              <option value="estimate">Estimate only</option>
+              <option value="unavailable">Unavailable</option>
+            </select></label
+          ><label id="quote-tip"
+            >Included tip ($)<input
+              name="tip"
+              type="number"
+              min="0"
+              step="0.01"
+              value="3"
+          /></label>
+        </div>
+        <label id="basket-check" class="checkbox"
+          ><input name="basketConfirmed" type="checkbox" />Same restaurant
+          branch, items, sizes, modifiers, delivery address and
+          quantities</label
+        ><label
+          >Offer already reflected in total<input
+            name="offer"
+            placeholder="e.g. $5 discount applied; or no verified offer"
+            maxlength="1000" /></label
+        ><label
+          >Notes<input
+            name="note"
+            placeholder="Missing fees, membership benefit, availability…"
+            maxlength="2000" /></label
+        ><label
+          >Evidence screenshot<input
+            name="evidence"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+        /></label>
+        <p id="quote-error" class="error" role="alert"></p>
+        <button class="primary" type="submit">
+          Save quote <span>↗</span>
+        </button>
+      </form>
+    </dialog>
+    <dialog id="setup-dialog">
+      <div class="dialog-heading">
+        <h2>Connect your phone</h2>
+        <button class="close" data-close="setup-dialog" aria-label="Close">
+          ×
+        </button>
+      </div>
+      <p id="setup-status"></p>
+      <ol>
+        <li>
+          Get a working PhoneUse device. Sign into your provider apps yourself.
+        </li>
+        <li>
+          Run the included local server with your PhoneUse and model API
+          credentials. Open its printed localhost URL on this Mac.
+        </li>
+        <li>
+          Enter the exact trip or basket. Check my apps runs one provider at a
+          time.
+        </li>
+        <li>
+          Review screenshots and confirm basket matching before trusting a food
+          recommendation.
+        </li>
+      </ol>
+      <p>
+        The hosted preview supports manual quotes, screenshots and JSON import.
+        Live collection runs in the supplied local backend, not this static
+        hosted preview.
+      </p>
+      <p>
+        Live collection is experimental and requires supervision. It stops
+        before booking or placing an order; that stopping rule is a model
+        instruction, not a payment sandbox.
+      </p>
+    </dialog>
+    <dialog id="evidence-dialog">
+      <div class="dialog-heading">
+        <h2>Quote evidence</h2>
+        <button class="close" data-close="evidence-dialog" aria-label="Close">
+          ×
+        </button>
+      </div>
+      <img id="evidence-image" alt="Screenshot supporting this quote" />
+    </dialog>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>
