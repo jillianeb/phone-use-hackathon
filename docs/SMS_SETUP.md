@@ -77,7 +77,7 @@ Use the exact origin configured in `SMS_PUBLIC_BASE_URL`, with no path prefix, q
 ## 5. Test the real loop
 
 1. From the bound Android phone, text HELP. Confirm one reply.
-2. Send a complete food request with an explicit branch, basket, address, dollar tip, budget and deadline.
+2. Send a food request with a restaurant name, basket, delivery place, dollar tip, budget and deadline. Place names and landmarks work; street addresses are optional. If the provider finds multiple matches, answer the agent's city/branch/landmark question and then reply CHECK again.
 3. Verify the summary, then reply CHECK. Watch the controlled phone. No order should be placed.
 4. Review provisional totals and evidence links. Confirm basket matching with MATCH only after inspecting them.
 5. Change the budget/time limit, then test a ride request.

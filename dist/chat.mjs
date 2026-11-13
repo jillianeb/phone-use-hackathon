@@ -145,9 +145,9 @@ $("#message").onkeydown = (e) => {
   }
 };
 const starters = {
-  food: "Compare 2 veggie burritos from Example Burrito Kitchen, Market St; deliver to 456 Example St; tip $3; under $35; within 45 minutes.",
+  food: "Compare 2 veggie burritos from Chipotle near Moscone Center; deliver to Moscone Center, San Francisco; tip $3; under $35; within 45 minutes.",
   rides:
-    "Compare a ride from 123 Example St to 789 Demo Ave; under $25; within 45 minutes.",
+    "Compare a ride from Ferry Building to Union Square, San Francisco; under $25; within 45 minutes.",
   help: "help",
 };
 for (const b of document.querySelectorAll("[data-prompt]"))

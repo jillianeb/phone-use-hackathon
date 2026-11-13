@@ -28,6 +28,23 @@ export function validateQuote(q, mode) {
   for (const key of ["offer", "note"])
     if (q[key] != null && (typeof q[key] !== "string" || q[key].length > 3000))
       throw Error(`Invalid ${key}`);
+  let clarification = null;
+  if (q.clarification != null) {
+    const allowed =
+      mode === "food" ? ["restaurant", "address"] : ["pickup", "destination"];
+    const value = q.clarification;
+    if (
+      !value ||
+      !allowed.includes(value.field) ||
+      typeof value.question !== "string" ||
+      !value.question.trim() ||
+      value.question.length > 1000
+    )
+      throw Error("Invalid location clarification");
+    if (q.totalCents != null || q.stage !== "unavailable")
+      throw Error("Resolve location ambiguity before reporting a price");
+    clarification = { field: value.field, question: value.question.trim() };
+  }
   return {
     provider: q.provider,
     totalCents: q.totalCents ?? null,
@@ -37,7 +54,8 @@ export function validateQuote(q, mode) {
     basketConfirmed: q.basketConfirmed === true,
     observedAt: q.observedAt,
     offer: q.offer || "",
-    note: q.note || "",
+    note: q.note || clarification?.question || "",
+    clarification,
     evidenceDataUrl: q.evidenceDataUrl || null,
     source: ["example", "live", "manual", "imported"].includes(q.source)
       ? q.source

@@ -21,6 +21,21 @@ const fields = new Set([
   "maxCents",
 ]);
 const numberFields = new Set(["tipCents", "maxMinutes", "maxCents"]);
+const locationFields = new Set([
+  "restaurant",
+  "address",
+  "pickup",
+  "destination",
+]);
+// Preserve the user's place-name query; don't invent an address or coordinates.
+function locationText(value) {
+  return value
+    .split(
+      /;|\s+(?=(?:deliver(?:y)?\s+to|send\s+to|tip\s*\$|under\s*\$|within\s+\d+\s*min|budget\s*\$))/i,
+    )[0]
+    .replace(/[,\s]+$/, "")
+    .trim();
+}
 export function cleanPatch(raw = {}) {
   const patch = {};
   for (const [k, v] of Object.entries(raw)) {
@@ -81,7 +96,12 @@ export function simpleInterpret(text, state = newConversation()) {
     )
   )
     return { intent: "order", patch };
-  if (/\b(rides?|uberx|lyft|transit|take me|get me to)\b/i.test(t))
+  if (
+    /\b(rides?|uberx?|lyft|transit|(?:take|bring|get)\s+(?:me\s+)?to)\b/i.test(
+      t,
+    ) &&
+    !/\buber\s+eats\b/i.test(t)
+  )
     mode = "rides";
   else if (
     /\b(food|burritos?|pizzas?|burgers?|dinner|lunch|ubereats|uber eats|doordash|deliver(?:y)?)\b/i.test(
@@ -89,6 +109,7 @@ export function simpleInterpret(text, state = newConversation()) {
     )
   )
     mode = "food";
+  else if (/\bfrom\s+.+\s+to\s+.+/i.test(t)) mode = "rides";
   const moneyMatch = t.match(
     /(?:under|budget(?: of)?|less than|no more than|up to)\s*\$\s*(\d+(?:\.\d{1,2})?)/i,
   );
@@ -108,13 +129,17 @@ export function simpleInterpret(text, state = newConversation()) {
     ["restaurant", "restaurant"],
     ["basket", "basket"],
     ["address", "address"],
+    ["delivery location", "address"],
     ["pickup", "pickup"],
     ["destination", "destination"],
   ]) {
     const match = t.match(
       new RegExp("(?:^|;)\\s*" + label + "\\s*:\\s*([^;]+)", "i"),
     );
-    if (match) patch[key] = match[1].trim();
+    if (match)
+      patch[key] = locationFields.has(key)
+        ? locationText(match[1])
+        : match[1].trim();
   }
   const activeMode = mode || state.mode;
   if (activeMode === "food") {
@@ -123,23 +148,39 @@ export function simpleInterpret(text, state = newConversation()) {
     );
     if (basket) {
       patch.basket = basket[1].trim();
-      patch.restaurant = basket[2].trim();
+      patch.restaurant = locationText(basket[2]);
     }
     const address = t.match(/(?:deliver(?:y)?\s+to|send\s+to)\s+([^;]+)/i);
-    if (address) patch.address = address[1].trim();
+    if (address) patch.address = locationText(address[1]);
   } else if (activeMode === "rides") {
     const trip = t.match(/\bfrom\s+(.+?)\s+to\s+([^;]+)/i);
     if (trip) {
-      patch.pickup = trip[1].trim();
-      patch.destination = trip[2].trim();
+      patch.pickup = locationText(trip[1]);
+      patch.destination = locationText(trip[2]);
     }
+    const destination = t.match(
+      /(?:\b(?:take|bring|get)\s+(?:me\s+)?to|\b(?:ride|trip)\s+to)\s+(.+)/i,
+    );
+    if (!trip && destination) patch.destination = locationText(destination[1]);
   }
+  const at = t.match(
+    /(?:\bI(?:['’]m| am)\s+at|\bpick\s+me\s+up\s+(?:at|from))\s+(.+?)(?=\s+and\s+|;|$)/i,
+  );
+  if (at)
+    patch[activeMode === "food" ? "address" : "pickup"] = locationText(at[1]);
   if (
     !Object.keys(patch).length &&
     state.awaiting &&
     fields.has(state.awaiting)
   )
-    patch[state.awaiting] = t;
+    patch[state.awaiting] =
+      state.phase === "clarifying" &&
+      locationFields.has(state.awaiting) &&
+      !/^(here|near me|my location|current location|home|work)$/i.test(
+        state.request[state.awaiting]?.trim(),
+      )
+        ? `${state.request[state.awaiting]}, ${t}`
+        : t;
   return { intent, mode, patch };
 }
 export function summary(state) {
@@ -252,7 +293,7 @@ export function reduceConversation(previous, interpretation, now = Date.now()) {
     return {
       state,
       replies: [
-        'Food: "Compare 2 veggie burritos from [restaurant + branch]; deliver to [address]; tip $3; under $35; within 45 minutes."\nRides: "Compare a ride from [pickup] to [destination]; under $25; within 30 minutes."\nCHECK starts a comparison; CANCEL stops a task; NEW resets; STOP stops replies.',
+        'Food: "Compare 2 veggie burritos from Chipotle near Moscone Center; deliver to Moscone Center, San Francisco; tip $3; under $35."\nRides: "Get me to SFO" or "Ride from Ferry Building to Union Square, San Francisco." Place names, landmarks and addresses all work. I will ask when a place is unclear.\nCHECK starts a comparison; CANCEL stops a task; NEW resets; STOP stops replies.',
       ],
     };
   if (intent === "status")
@@ -351,13 +392,35 @@ export function reduceConversation(previous, interpretation, now = Date.now()) {
   if (missing) {
     state.awaiting = missing;
     const questions = {
-      restaurant: "Which restaurant and exact branch?",
+      restaurant:
+        "Which restaurant? A name or nearby landmark is enough to start, such as Chipotle near Moscone Center.",
       basket: "What exact items, quantities, sizes and modifications?",
-      address: "What is the full delivery address?",
-      pickup: "What is the exact pickup address?",
-      destination: "Where are you going? Send the destination address.",
+      address:
+        "Where should it be delivered? Send a place name, landmark, hotel or address; add the city if needed.",
+      pickup:
+        "Where should you be picked up? A place name, landmark or address works, such as Ferry Building, San Francisco.",
+      destination:
+        "Where are you going? Send a place name, landmark or address, such as SFO or Union Square, San Francisco.",
     };
     return { state, replies: [questions[missing]], cancel: cancelNeeded };
+  }
+  const vague = required.find(
+    (k) =>
+      locationFields.has(k) &&
+      /^(here|near me|my location|current location|home|work)$/i.test(
+        state.request[k]?.trim(),
+      ),
+  );
+  if (vague) {
+    state.awaiting = vague;
+    state.phase = "clarifying";
+    return {
+      state,
+      replies: [
+        `What place or landmark do you mean by "${state.request[vague]}"? For example, Ferry Building, San Francisco. I cannot infer your location from a text message.`,
+      ],
+      cancel: cancelNeeded,
+    };
   }
   state.awaiting = null;
   if (state.quotes.length && intent !== "refresh")
@@ -411,6 +474,20 @@ export function completeComparison(previous, job, quotes, now = Date.now()) {
     return null;
   const state = structuredClone(previous);
   state.quotes = quotes.map((q) => validateQuote(q, job.mode));
+  const clarification = state.quotes.find(
+    (q) => q.clarification,
+  )?.clarification;
+  if (clarification) {
+    state.quotes = [];
+    state.phase = "clarifying";
+    state.awaiting = clarification.field;
+    return {
+      state,
+      replies: [
+        `I need to identify the right location before comparing prices: ${clarification.question}\nA city, neighborhood or nearby landmark is fine; a street address is optional.`,
+      ],
+    };
+  }
   state.phase = "done";
   state.checkedAt = new Date(now).toISOString();
   return { state, replies: [recommendation(state, now)] };

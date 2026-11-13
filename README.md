@@ -38,8 +38,8 @@ The service listens on loopback port 3111 by default. It needs a public HTTPS or
 ## Conversation
 
 ```text
-You: Compare 2 veggie burritos from [restaurant + branch];
-     deliver to [address]; tip $3; under $35; within 45 minutes.
+You: Compare 2 veggie burritos from Chipotle near Moscone Center;
+     deliver to Moscone Center, San Francisco; tip $3; under $35.
 Agent: [Checks details.] Reply CHECK to start.
 You: CHECK
 Agent: Checking Uber Eats and DoorDash...
@@ -51,6 +51,8 @@ Agent: [Reranks qualifying recent quotes.]
 Food results stay provisional until the user reviews the basket evidence and replies MATCH. Applied offers remain inside the displayed total and are never deducted twice. Changing the basket, address or tip invalidates old quotes. Budget/time-only follow-ups can reuse recent quotes. Live quotes older than five minutes prompt a refresh.
 
 Commands: HELP, CHECK, REFRESH, WHY, FASTEST, STATUS, MATCH, CANCEL, NEW, STOP, START. Natural language is interpreted through the configured model in the SMS service. Users should complete login and verification directly in provider apps.
+
+Location inputs accept place names, airports, hotels, landmarks and natural descriptions. Try “Get me to SFO,” then answer the pickup question with “Ferry Building, San Francisco.” Street addresses are optional. The collector searches names in provider apps and asks for a city, branch or landmark if there are multiple plausible results. It never assumes the cloud phone's GPS is your location. Inputs such as “here” or an unsaved “home” need clarification. Provider-side place matching remains unverified until a working phone is connected.
 
 ## Engineering choices
 
